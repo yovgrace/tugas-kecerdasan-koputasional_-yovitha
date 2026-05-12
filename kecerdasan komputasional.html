@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sistem Presensi Mahasiswa — Decision Tree</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream:           #FFFBF0;
+      --gold:            #C9A84C;
+      --gold-light:      #F5E6C0;
+      --gold-mid:        #E8C870;
+      --gold-dark:       #8A6B1E;
+      --gold-deeper:     #5C4510;
+      --white:           #FFFFFF;
+      --text-dark:       #2C1F00;
+      --text-mid:        #6B4E1A;
+      --text-muted:      #A07840;
+      --border:          rgba(201,168,76,0.35);
+      --active-bg:       #F0F9F4;
+      --active-border:   #3DB870;
+      --active-text:     #1A5C35;
+      --inactive-bg:     #FFF0F0;
+      --inactive-border: #D94040;
+      --inactive-text:   #7A1A1A;
+      --disiplin-bg:     #FFF8E1;
+      --disiplin-border: #C9A84C;
+      --disiplin-text:   #5C4510;
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--cream);
+      color: var(--text-dark);
+      min-height: 100vh;
+      padding: 2rem 1rem 3rem;
+    }
+
+    .app {
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--gold-light);
+      border: 0.5px solid var(--gold);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 12px;
+      color: var(--gold-dark);
+      font-weight: 500;
+      margin-bottom: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .header h1 {
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--text-dark);
+      line-height: 1.3;
+    }
+    .header p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* ── STATS ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: var(--white);
+      border: 0.5px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+    }
+    .stat-num {
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── DECISION BOX ── */
+    .decision-box {
+      background: var(--gold-light);
+      border: 0.5px solid var(--gold);
+      border-radius: 12px;
+      padding: 16px 18px;
+      margin-bottom: 1.5rem;
+    }
+    .decision-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gold-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .rule {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: 13px;
+      color: var(--text-mid);
+    }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .filter-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .filter-btn {
+      background: var(--white);
+      border: 0.5px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 12px;
+      color: var(--text-mid);
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .filter-btn:hover  { border-color: var(--gold); color: var(--gold-dark); }
+    .filter-btn.active { background: var(--gold); border-color: var(--gold); color: white; }
+
+    /* ── CARD GRID ── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 14px;
+      margin-bottom: 1.5rem;
+    }
+    .student-card {
+      background: var(--white);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      transition: border-color 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .student-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--gold-mid);
+    }
+    .student-card:hover { border-color: var(--gold); }
+
+    .avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: var(--gold-light);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 600;
+      color: var(--gold-dark);
+      border: 1.5px solid var(--gold-mid);
+      margin-bottom: 10px;
+    }
+    .student-name { font-size: 15px; font-weight: 600; color: var(--text-dark); margin-bottom: 2px; }
+    .student-nim  { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .info-key { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+    .info-val { font-size: 12px; font-weight: 500; color: var(--text-mid); }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 500; margin-top: 8px;
+    }
+    .status-aktif  { background: var(--active-bg);   border: 0.5px solid var(--active-border);   color: var(--active-text); }
+    .status-tidak  { background: var(--inactive-bg); border: 0.5px solid var(--inactive-border); color: var(--inactive-text); }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    .disiplin-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--disiplin-bg);
+      border: 0.5px solid var(--disiplin-border);
+      color: var(--disiplin-text);
+      border-radius: 20px;
+      font-size: 10px; font-weight: 500;
+      padding: 3px 8px; margin-top: 6px;
+    }
+
+    /* ── ADD FORM ── */
+    .toggle-add {
+      background: var(--white);
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 13px; font-weight: 500;
+      color: var(--text-mid);
+      cursor: pointer;
+      font-family: inherit;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: all 0.15s;
+      margin-bottom: 1rem;
+    }
+    .toggle-add:hover { border-color: var(--gold); color: var(--gold-dark); }
+
+    .add-form {
+      background: var(--white);
+      border: 0.5px dashed var(--gold);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+    .add-form-title {
+      font-size: 13px; font-weight: 600; color: var(--text-dark);
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .form-field { display: flex; flex-direction: column; gap: 4px; }
+    .form-label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+    .form-input, .form-select {
+      border: 0.5px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 13px; font-family: inherit;
+      background: var(--cream); color: var(--text-dark);
+      outline: none;
+    }
+    .form-input:focus, .form-select:focus { border-color: var(--gold); }
+    .add-btn {
+      background: var(--gold);
+      border: none; border-radius: 8px;
+      padding: 9px 20px;
+      font-size: 13px; font-weight: 600; color: white;
+      cursor: pointer; font-family: inherit; width: 100%;
+      transition: background 0.15s;
+    }
+    .add-btn:hover { background: var(--gold-dark); }
+
+    .empty-msg { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 13px; }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 0.5px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-badge">
+      <i class="ti ti-git-branch"></i> Decision Tree
+    </div>
+    <h1>Sistem Presensi Mahasiswa</h1>
+    <p>Kecerdasan Komputasional &middot; Klasifikasi Otomatis IF-ELSE</p>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num" id="statTotal">0</div>
+      <div class="stat-label">Total</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statAktif" style="color:#1A5C35;">0</div>
+      <div class="stat-label">Aktif</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statTidak" style="color:#7A1A1A;">0</div>
+      <div class="stat-label">Tidak Aktif</div>
+    </div>
+  </div>
+
+  <!-- DECISION RULES -->
+  <div class="decision-box">
+    <div class="decision-title">
+      <i class="ti ti-sitemap"></i> Aturan Keputusan (Decision Tree)
+    </div>
+    <div class="rule"><span>🟢</span><span>Kehadiran <strong>Tinggi</strong> &rarr; Status <strong>Aktif</strong></span></div>
+    <div class="rule"><span>🔴</span><span>Kehadiran <strong>Rendah</strong> &rarr; Status <strong>Tidak Aktif</strong></span></div>
+    <div class="rule"><span>⭐</span><span>Kehadiran Tinggi <strong>+</strong> Tugas Lengkap &rarr; <strong>Mahasiswa Disiplin</strong></span></div>
+  </div>
+
+  <!-- FILTER -->
+  <div class="filter-bar">
+    <span class="filter-label">Filter:</span>
+    <button class="filter-btn active" onclick="setFilter('semua', this)">Semua</button>
+    <button class="filter-btn" onclick="setFilter('Aktif', this)">Aktif</button>
+    <button class="filter-btn" onclick="setFilter('Tidak Aktif', this)">Tidak Aktif</button>
+    <button class="filter-btn" onclick="setFilter('disiplin', this)">Disiplin</button>
+  </div>
+
+  <!-- CARDS -->
+  <div class="card-grid" id="cardGrid"></div>
+  <div class="empty-msg" id="emptyMsg" style="display:none;">Tidak ada mahasiswa yang sesuai filter.</div>
+
+  <!-- ADD FORM TOGGLE -->
+  <button class="toggle-add" onclick="toggleForm()">
+    <i class="ti ti-user-plus"></i>
+    <span id="toggleLabel">Tambah Mahasiswa</span>
+  </button>
+
+  <!-- ADD FORM -->
+  <div class="add-form" id="addForm">
+    <div class="add-form-title"><i class="ti ti-edit"></i> Input Mahasiswa Baru</div>
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="form-label">Nama</label>
+        <input class="form-input" id="inputNama" placeholder="Nama mahasiswa" />
+      </div>
+      <div class="form-field">
+        <label class="form-label">NIM</label>
+        <input class="form-input" id="inputNim" placeholder="Contoh: 2301006" />
+      </div>
+      <div class="form-field">
+        <label class="form-label">Kehadiran</label>
+        <select class="form-select" id="inputKehadiran">
+          <option value="Tinggi">Tinggi</option>
+          <option value="Rendah">Rendah</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Tugas</label>
+        <select class="form-select" id="inputTugas">
+          <option value="Lengkap">Lengkap</option>
+          <option value="Tidak Lengkap">Tidak Lengkap</option>
+        </select>
+      </div>
+    </div>
+    <button class="add-btn" onclick="tambahMahasiswa()">
+      <i class="ti ti-plus"></i> Tambah ke Daftar
+    </button>
+  </div>
+
+  <div class="footer">Mata Kuliah Kecerdasan Komputasional &mdash; Decision Tree Presensi Mahasiswa</div>
+</div>
+
+<script>
+  // ── DATA MAHASISWA ──
+  let mahasiswa = [
+    { nama: "Andi",  nim: "2301001", kehadiran: "Tinggi", tugas: "Lengkap" },
+    { nama: "Budi",  nim: "2301002", kehadiran: "Rendah", tugas: "Tidak Lengkap" },
+    { nama: "Citra", nim: "2301003", kehadiran: "Tinggi", tugas: "Tidak Lengkap" },
+    { nama: "Deni",  nim: "2301004", kehadiran: "Rendah", tugas: "Lengkap" },
+    { nama: "Elsa",  nim: "2301005", kehadiran: "Tinggi", tugas: "Lengkap" },
+  ];
+
+  let currentFilter = 'semua';
+
+  // ── DECISION TREE (IF-ELSE) ──
+  function decisionTree(m) {
+    let status, disiplin;
+
+    if (m.kehadiran === "Tinggi") {
+      status = "Aktif";
+      if (m.tugas === "Lengkap") {
+        disiplin = true;   // Mahasiswa Disiplin
+      } else {
+        disiplin = false;
+      }
+    } else {
+      status = "Tidak Aktif";
+      disiplin = false;
+    }
+
+    return { status, disiplin };
+  }
+
+  // ── HELPER: AMBIL INISIAL ──
+  function initials(nama) {
+    return nama.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  }
+
+  // ── FILTER ──
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderCards();
+  }
+
+  // ── RENDER KARTU ──
+  function renderCards() {
+    const grid  = document.getElementById('cardGrid');
+    const empty = document.getElementById('emptyMsg');
+    grid.innerHTML = '';
+
+    let shown = 0, aktifCount = 0, tidakCount = 0;
+
+    mahasiswa.forEach(function(m) {
+      const { status, disiplin } = decisionTree(m);
+      if (status === 'Aktif') aktifCount++;
+      else tidakCount++;
+
+      const match =
+        currentFilter === 'semua' ||
+        (currentFilter === 'Aktif'       && status === 'Aktif') ||
+        (currentFilter === 'Tidak Aktif' && status === 'Tidak Aktif') ||
+        (currentFilter === 'disiplin'    && disiplin);
+
+      if (!match) return;
+      shown++;
+
+      const card = document.createElement('div');
+      card.className = 'student-card';
+      card.innerHTML =
+        '<div class="avatar">' + initials(m.nama) + '</div>' +
+        '<div class="student-name">' + m.nama + '</div>' +
+        '<div class="student-nim">' + m.nim + '</div>' +
+        '<div class="info-row">' +
+          '<span class="info-key"><i class="ti ti-calendar-event" style="font-size:13px"></i> Kehadiran</span>' +
+          '<span class="info-val">' + m.kehadiran + '</span>' +
+        '</div>' +
+        '<div class="info-row">' +
+          '<span class="info-key"><i class="ti ti-file-check" style="font-size:13px"></i> Tugas</span>' +
+          '<span class="info-val">' + m.tugas + '</span>' +
+        '</div>' +
+        '<div>' +
+          '<span class="status-badge ' + (status === 'Aktif' ? 'status-aktif' : 'status-tidak') + '">' +
+            '<span class="dot"></span>' + status +
+          '</span>' +
+        '</div>' +
+        (disiplin
+          ? '<div><span class="disiplin-tag"><i class="ti ti-star" style="font-size:10px"></i> Mahasiswa Disiplin</span></div>'
+          : '');
+
+      grid.appendChild(card);
+    });
+
+    document.getElementById('statTotal').textContent = mahasiswa.length;
+    document.getElementById('statAktif').textContent = aktifCount;
+    document.getElementById('statTidak').textContent = tidakCount;
+    empty.style.display = shown === 0 ? 'block' : 'none';
+  }
+
+  // ── TOGGLE FORM ──
+  function toggleForm() {
+    const f   = document.getElementById('addForm');
+    const lbl = document.getElementById('toggleLabel');
+    const open = f.style.display === 'none' || f.style.display === '';
+    f.style.display  = open ? 'block' : 'none';
+    lbl.textContent  = open ? 'Tutup Form' : 'Tambah Mahasiswa';
+  }
+
+  // ── TAMBAH MAHASISWA ──
+  function tambahMahasiswa() {
+    const nama      = document.getElementById('inputNama').value.trim();
+    const nim       = document.getElementById('inputNim').value.trim();
+    const kehadiran = document.getElementById('inputKehadiran').value;
+    const tugas     = document.getElementById('inputTugas').value;
+
+    if (!nama) { alert('Nama wajib diisi!'); return; }
+    if (!nim)  { alert('NIM wajib diisi!');  return; }
+
+    mahasiswa.push({ nama, nim, kehadiran, tugas });
+
+    document.getElementById('inputNama').value = '';
+    document.getElementById('inputNim').value  = '';
+
+    renderCards();
+  }
+
+  // ── INIT ──
+  renderCards();
+</script>
+</body>
+</html>
